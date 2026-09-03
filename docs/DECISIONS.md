@@ -31,3 +31,28 @@ This is an append-only implementation log. Planned Packet tests remain marked
   Feature 1 uses responsive CSS but has not been marked against any Packet Mechanical Pass test.
 - **Tomorrow's first move:** After user review, begin Feature 2 by defining the versioned Zod record
   schema before adding persistence behavior.
+
+## 2026-09-03 — Session 2: Feature 2 structured record and lifecycle
+
+- **Decision or implementation detail:** Added one strict, versioned Zod record with ten separate
+  data groups, an invented fixed-case fixture, pure lifecycle helpers, and a single-record browser
+  storage adapter. The root view creates the fixture only after explicit action and supports manual
+  deletion. Raw baseline and proposed-workflow cost inputs are present, while all calculated cost
+  results remain empty for Feature 3.
+- **Reason and Packet boundary protected:** Runtime validation and strict nested objects reject
+  unknown persisted fields, including audio. Expiry and context invalidation are deterministic,
+  and invalid or expired storage is removed without automatically creating a replacement case.
+- **Files or behavior changed:** Added schema, fixture, lifecycle, storage, tests, and the client
+  empty/active case states; updated the shell styles and direct dependencies.
+- **Real tests run and results:** The first lint run found one synchronous-effect state-update
+  error in `app/demo-case.tsx`; localStorage hydration was deferred to the next animation frame.
+  After the fix, the final `npm test` run passed 17 tests, `npm run lint` passed with no findings, and
+  `npm run build` passed with TypeScript checking and static generation of `/`. Final verification
+  confirmed the Packet checksum was unchanged, no populated Gemini secret or public Gemini
+  variable was present, and no Feature 3 calculation or baseline-lock behavior was added.
+- **Commit SHA and push status:** No commit requested yet; report the verified Feature 2 diff for
+  user review before committing.
+- **Deployment URL/status:** Not applicable during Feature 2.
+- **Unresolved issues:** None within the approved Feature 2 scope.
+- **Tomorrow's first move:** After Feature 2 review and authorization, define the Feature 3 pure
+  cost arithmetic and baseline-lock invariants before adding baseline controls.

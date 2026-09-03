@@ -1,3 +1,5 @@
+import { DemoCase } from "./demo-case";
+
 const workflowSteps = [
   "Baseline Setup",
   "Candidate Consent & Evidence",
@@ -28,12 +30,7 @@ export default function Home() {
         </nav>
 
         <main className="main-content">
-          <p className="eyebrow">Step 1 of 4</p>
-          <h2>Baseline Setup</h2>
-          <p className="placeholder-copy">
-            This foundation establishes the four-step demo workspace. Baseline controls will be
-            added in a later feature.
-          </p>
+          <DemoCase />
         </main>
       </div>
     </div>

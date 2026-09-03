@@ -134,6 +134,80 @@ body {
   color: var(--muted);
 }
 
+.case-state {
+  max-width: 48rem;
+}
+
+.case-label {
+  display: inline-block;
+  margin: 1.5rem 0 0;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.3rem;
+  color: #073b9b;
+  background: var(--blue-100);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.case-context {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 1.5rem 0 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--line);
+}
+
+.case-context div {
+  padding: 1rem;
+  background: var(--surface);
+}
+
+.case-context dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.case-context dd {
+  margin: 0.3rem 0 0;
+  font-weight: 700;
+}
+
+.primary-action,
+.secondary-action {
+  min-height: 2.75rem;
+  margin-top: 1.5rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.4rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-action {
+  border: 1px solid var(--blue-700);
+  color: #ffffff;
+  background: var(--blue-700);
+}
+
+.secondary-action {
+  border: 1px solid var(--blue-700);
+  color: var(--blue-700);
+  background: var(--surface);
+}
+
+.primary-action:focus-visible,
+.secondary-action:focus-visible {
+  outline: 3px solid #f3b61f;
+  outline-offset: 3px;
+}
+
 @media (max-width: 700px) {
   .topbar {
     align-items: flex-start;
@@ -167,5 +241,9 @@ body {
 
   .main-content {
     padding: 2rem 1rem 4rem;
+  }
+
+  .case-context {
+    grid-template-columns: 1fr;
   }
 }
