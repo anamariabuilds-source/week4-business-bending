@@ -46,12 +46,15 @@ This is an append-only implementation log. Planned Packet tests remain marked
   empty/active case states; updated the shell styles and direct dependencies.
 - **Real tests run and results:** The first lint run found one synchronous-effect state-update
   error in `app/demo-case.tsx`; localStorage hydration was deferred to the next animation frame.
+  This was a Feature 2 implementation issue discovered and resolved before session close; it does
+  not count as the required Mechanical Pass bug, and the Mechanical Pass has not started.
   After the fix, the final `npm test` run passed 17 tests, `npm run lint` passed with no findings, and
   `npm run build` passed with TypeScript checking and static generation of `/`. Final verification
   confirmed the Packet checksum was unchanged, no populated Gemini secret or public Gemini
   variable was present, and no Feature 3 calculation or baseline-lock behavior was added.
-- **Commit SHA and push status:** No commit requested yet; report the verified Feature 2 diff for
-  user review before committing.
+- **Commit SHA and push status:** Feature 2 committed as `7789572` and successfully pushed to
+  `origin/main`; local HEAD and the remote-tracking branch both resolved to the same full SHA,
+  `7789572a95790ab1dc294bb81a8d026a7727e24e`.
 - **Deployment URL/status:** Not applicable during Feature 2.
 - **Unresolved issues:** None within the approved Feature 2 scope.
 - **Tomorrow's first move:** After Feature 2 review and authorization, define the Feature 3 pure
