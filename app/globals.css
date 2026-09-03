@@ -1,0 +1,171 @@
+:root {
+  color-scheme: light;
+  --navy-950: #061a3d;
+  --navy-900: #092652;
+  --blue-700: #1657c8;
+  --blue-100: #e7f0ff;
+  --ink: #102044;
+  --muted: #5b6680;
+  --line: #d8dfeb;
+  --surface: #ffffff;
+  --canvas: #f4f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--canvas);
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--canvas);
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: var(--surface);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-height: 5rem;
+  padding: 1rem clamp(1rem, 4vw, 3rem);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  line-height: 1.2;
+}
+
+.demo-banner {
+  flex: 0 0 auto;
+  order: 2;
+  margin: 0 0 0 auto;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.35rem;
+  color: #073b9b;
+  background: var(--blue-100);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr);
+  min-height: calc(100vh - 5rem);
+}
+
+.step-navigation {
+  padding: 2rem 1rem;
+  color: #ffffff;
+  background: linear-gradient(160deg, var(--navy-950), var(--navy-900));
+}
+
+.step-navigation ol {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step-navigation li {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.75rem;
+  padding: 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  font-size: 0.92rem;
+}
+
+.step-navigation li[aria-current="step"] {
+  border-color: rgb(255 255 255 / 20%);
+  background: rgb(53 116 224 / 35%);
+}
+
+.step-number {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-weight: 700;
+}
+
+.main-content {
+  width: min(100%, 70rem);
+  padding: clamp(2rem, 7vw, 5rem);
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  color: var(--blue-700);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.main-content h2 {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  line-height: 1.15;
+}
+
+.placeholder-copy {
+  max-width: 42rem;
+  margin: 1rem 0 0;
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .demo-banner {
+    order: 0;
+    margin: 0;
+  }
+
+  .workspace {
+    display: block;
+    min-height: auto;
+  }
+
+  .step-navigation {
+    overflow-x: auto;
+    padding: 0.75rem 1rem;
+  }
+
+  .step-navigation ol {
+    display: flex;
+    width: max-content;
+  }
+
+  .step-navigation li {
+    width: 12rem;
+  }
+
+  .main-content {
+    padding: 2rem 1rem 4rem;
+  }
+}
