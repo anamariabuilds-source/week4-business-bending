@@ -59,3 +59,32 @@ This is an append-only implementation log. Planned Packet tests remain marked
 - **Unresolved issues:** None within the approved Feature 2 scope.
 - **Tomorrow's first move:** After Feature 2 review and authorization, define the Feature 3 pure
   cost arithmetic and baseline-lock invariants before adding baseline controls.
+
+## 2026-09-03 — Session 3: Feature 3 baseline and cost model
+
+- **Decision or implementation detail:** Added pure employer-cost arithmetic and Checkpoint 1 lock
+  functions plus a functional Baseline Setup form. Current and proposed costs are rounded to two
+  decimals and stored separately; candidate time is excluded. Locking preserves the validated raw
+  inputs, costs, volume, candidate time, simulated 50% rule, and timestamp. Actual cost, workflow
+  outcome, and observed substitution remain null and are not displayed.
+- **Reason and Packet boundary protected:** The cost function receives only employer cost inputs
+  and candidate volume. The lock function does not derive any result from evidence status, Hiring
+  Manager relevance, or stated interest, so none can establish substitution or economic value.
+  Obvious contact patterns are rejected in the new free-text field without claiming perfect PII
+  detection.
+- **Files or behavior changed:** Added the Checkpoint 1 rules and tests, strengthened baseline
+  validation, made the Baseline Setup view editable before lock and read-only after lock, and added
+  responsive form and cost-summary styles.
+- **Real tests run and results:** The first full run passed tests but lint reported one unused test
+  variable warning and the build failed because TypeScript did not preserve a nullable `lockedAt`
+  narrowing through JSX. Both were fixed before session close. These are Feature 3 implementation
+  issues, not Mechanical Pass bugs; the Mechanical Pass has not started. The final `npm test` run
+  passed 35 tests across two files, `npm run lint` passed with no findings, and `npm run build`
+  passed with TypeScript checking and static generation of `/`.
+- **Commit SHA and push status:** No commit yet; Feature 3 must be reviewed before staging or
+  committing.
+- **Deployment URL/status:** Not deployed; deployment is outside Feature 3.
+- **Unresolved issues:** None within the approved Feature 3 scope. Final integrity, secret, and
+  scope scans passed before review.
+- **Tomorrow's first move:** After Feature 3 review and authorization, define the bounded Feature 4
+  consent-state transitions before adding Candidate Text and no-project UI branches.

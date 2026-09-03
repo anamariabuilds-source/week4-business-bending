@@ -4,9 +4,17 @@ export const DEMO_SCHEMA_VERSION = 1 as const;
 
 const isoDateTime = z.iso.datetime({ offset: true });
 const boundedText = (maximum: number) => z.string().trim().min(1).max(maximum);
+const obviousEmailPattern = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
+const obviousPhonePattern = /(?:\+?\d[\s().-]*){10,}/;
+const boundedDemoText = (maximum: number) =>
+  boundedText(maximum).refine(
+    (value) => !obviousEmailPattern.test(value) && !obviousPhonePattern.test(value),
+    "Use simulated content without email addresses or phone numbers.",
+  );
 const nonNegativeNumber = z.number().finite().min(0);
+const positiveNumber = z.number().finite().positive();
 
-const costInputsSchema = z
+export const costInputsSchema = z
   .object({
     talentAcquisitionMinutesPerCandidate: nonNegativeNumber,
     talentAcquisitionHourlyRateMxn: nonNegativeNumber,
@@ -14,6 +22,19 @@ const costInputsSchema = z
     hiringManagerHourlyRateMxn: nonNegativeNumber,
     externalFeesPerCandidateMxn: nonNegativeNumber,
     llmSystemCostPerCandidateMxn: nonNegativeNumber,
+  })
+  .strict();
+
+export const checkpoint1BaselineDraftSchema = z
+  .object({
+    existingScreeningStep: boundedDemoText(300),
+    originalDurationMinutes: positiveNumber,
+    employerActiveTimeMinutesPerCandidate: nonNegativeNumber,
+    currentScreeningCostInputs: costInputsSchema,
+    candidateTimeMinutesPerCandidate: nonNegativeNumber,
+    candidateVolume: z.number().int().positive().max(1000),
+    proposedProofWorkflowCostInputs: costInputsSchema,
+    simulatedMaterialityThresholdPercent: z.literal(50),
   })
   .strict();
 
@@ -112,16 +133,8 @@ export const hiringCycleRecordSchema = z
         note: z.string().max(500).nullable(),
       })
       .strict(),
-    checkpoint1Baseline: z
-      .object({
-        existingScreeningStep: boundedText(300),
-        originalDurationMinutes: nonNegativeNumber,
-        employerActiveTimeMinutesPerCandidate: nonNegativeNumber,
-        currentScreeningCostInputs: costInputsSchema,
-        candidateTimeMinutesPerCandidate: nonNegativeNumber,
-        candidateVolume: z.number().int().positive().max(1000),
-        proposedProofWorkflowCostInputs: costInputsSchema,
-        simulatedMaterialityThresholdPercent: z.literal(50),
+    checkpoint1Baseline: checkpoint1BaselineDraftSchema
+      .extend({
         lockedAt: isoDateTime.nullable(),
       })
       .strict(),
@@ -173,3 +186,5 @@ export const hiringCycleRecordSchema = z
 
 export type HiringCycleRecord = z.infer<typeof hiringCycleRecordSchema>;
 export type ContextAndConsent = HiringCycleRecord["contextAndConsent"];
+export type CostInputs = z.infer<typeof costInputsSchema>;
+export type Checkpoint1BaselineDraft = z.infer<typeof checkpoint1BaselineDraftSchema>;
