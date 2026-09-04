@@ -109,8 +109,9 @@ This is an append-only implementation log. Planned Packet tests remain marked
   of `/`. No real implementation issue was discovered during Feature 4 before final review.
 - **Mechanical Pass status:** Not started. T08 and every other Packet Mechanical Pass test remain
   `Not run — planned before code`; the placeholder does not count as running or validating T08.
-- **Commit SHA and push status:** No commit yet; Feature 4 must be reviewed before staging or
-  committing.
+- **Commit SHA and push status:** Feature 4 committed as `ab5a3ac` and successfully pushed to
+  `origin/main`; local HEAD and the remote-tracking branch both resolved to the same full SHA,
+  `ab5a3ac9c06389a2cf05bc01dab8f52046232373`.
 - **Deployment URL/status:** Not deployed; Deploy 1 requires separate post-review authorization.
 - **Unresolved issues:** None within the approved Feature 4 scope. Final integrity, secret,
   personal-data, safe-rendering, and later-feature scope scans passed before review.
