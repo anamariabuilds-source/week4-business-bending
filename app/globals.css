@@ -357,6 +357,75 @@ textarea:focus-visible {
   margin: 0.3rem 0 0;
 }
 
+.context-panel,
+.consent-panel {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+
+.context-panel h3,
+.consent-panel h3,
+.response-review h4 {
+  margin: 0;
+}
+
+.consent-panel > p,
+.fixed-prompt {
+  max-width: 48rem;
+}
+
+.action-row,
+.step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.action-row .primary-action,
+.action-row .secondary-action,
+.step-actions .secondary-action {
+  margin-top: 0;
+}
+
+.response-review {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--canvas);
+}
+
+.response-review p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.character-count {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+  text-align: right;
+}
+
+.align-start {
+  justify-self: start;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.handoff-message {
+  padding: 0.75rem;
+  border-left: 4px solid var(--blue-700);
+  background: var(--blue-100);
+}
+
 @media (max-width: 700px) {
   .topbar {
     align-items: flex-start;

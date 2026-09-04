@@ -11,6 +11,7 @@ const boundedDemoText = (maximum: number) =>
     (value) => !obviousEmailPattern.test(value) && !obviousPhonePattern.test(value),
     "Use simulated content without email addresses or phone numbers.",
   );
+export const confirmationResponseSchema = boundedDemoText(600);
 const nonNegativeNumber = z.number().finite().min(0);
 const positiveNumber = z.number().finite().positive();
 
@@ -99,7 +100,7 @@ export const hiringCycleRecordSchema = z
       .object({
         prompt: boundedText(600),
         modality: z.enum(["text", "voice"]).nullable(),
-        confirmationResponse: z.string().max(600).nullable(),
+        confirmationResponse: confirmationResponseSchema.nullable(),
         transcriptReviewState: z.enum(["not_applicable", "pending", "reviewed"]).nullable(),
         voiceTechnicalState: z
           .enum(["not_started", "recording", "transcribing", "available", "unavailable"])

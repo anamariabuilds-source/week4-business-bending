@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 
 import { calculateEmployerCost, lockCheckpoint1, type EmployerCost } from "@/lib/demo-record/checkpoint1";
+import {
+  authorizeCurrentContext,
+  authorizeReviewedTextAnalysis,
+  declineSharing,
+  openBaselineStep,
+  openCandidateStep,
+  requestHumanReview,
+  selectNoRelevantProject,
+} from "@/lib/demo-record/consent";
 import { createSimulatedDemoRecord } from "@/lib/demo-record/fixture";
 import {
   checkpoint1BaselineDraftSchema,
@@ -17,6 +26,40 @@ import {
 } from "@/lib/demo-record/storage";
 
 type CostPrefix = "current" | "proposed";
+
+const workflowSteps = [
+  "Baseline Setup",
+  "Candidate Consent & Evidence",
+  "Evidence Review & Interest",
+  "Final Workflow Outcome",
+] as const;
+
+function Workspace({
+  children,
+  currentStep = 1,
+}: {
+  children: ReactNode;
+  currentStep?: number;
+}) {
+  return (
+    <div className="workspace">
+      <nav className="step-navigation" aria-label="Workflow steps">
+        <ol>
+          {workflowSteps.map((step, index) => {
+            const stepNumber = index + 1;
+            return (
+              <li key={step} aria-current={stepNumber === currentStep ? "step" : undefined}>
+                <span className="step-number" aria-hidden="true">{stepNumber}</span>
+                <span>{step}</span>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+      <main className="main-content">{children}</main>
+    </div>
+  );
+}
 
 function numberValue(formData: FormData, key: string): number {
   return Number(formData.get(key));
@@ -145,6 +188,9 @@ export function DemoCase() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [preview, setPreview] = useState<ReturnType<typeof calculatePreview> | null>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
+  const [draftResponse, setDraftResponse] = useState("");
+  const [isReviewingResponse, setIsReviewingResponse] = useState(false);
+  const [showHandoff, setShowHandoff] = useState(false);
 
   useEffect(() => {
     const hydrationFrame = window.requestAnimationFrame(() => {
@@ -176,6 +222,63 @@ export function DemoCase() {
     setRecord(null);
     setPreview(null);
     setValidationMessage(null);
+    setDraftResponse("");
+    setIsReviewingResponse(false);
+    setShowHandoff(false);
+  }
+
+  function persistRecord(nextRecord: HiringCycleRecord) {
+    saveDemoRecord(window.localStorage, nextRecord);
+    setRecord(nextRecord);
+  }
+
+  function goToCandidateStep() {
+    if (record !== null) persistRecord(openCandidateStep(record));
+  }
+
+  function goToBaselineStep() {
+    if (record !== null) persistRecord(openBaselineStep(record));
+  }
+
+  function chooseContextAuthorization() {
+    if (record === null) return;
+    persistRecord(authorizeCurrentContext(record));
+    setDraftResponse("");
+    setIsReviewingResponse(false);
+    setValidationMessage(null);
+  }
+
+  function chooseDoNotShare() {
+    if (record === null) return;
+    persistRecord(declineSharing(record));
+    setDraftResponse("");
+    setIsReviewingResponse(false);
+    setValidationMessage(null);
+  }
+
+  function chooseNoProject() {
+    if (record === null) return;
+    persistRecord(selectNoRelevantProject(record));
+    setDraftResponse("");
+    setIsReviewingResponse(false);
+    setShowHandoff(false);
+    setValidationMessage(null);
+  }
+
+  function authorizeTextAnalysis() {
+    if (record === null) return;
+    try {
+      persistRecord(authorizeReviewedTextAnalysis(record, draftResponse, isReviewingResponse));
+      setValidationMessage(null);
+    } catch {
+      setValidationMessage(
+        "Use 1–600 characters of simulated content without an email address or phone number.",
+      );
+    }
+  }
+
+  function pauseForHumanReview() {
+    if (record !== null) persistRecord(requestHumanReview(record));
   }
 
   function updatePreview(event: FormEvent<HTMLFormElement>) {
@@ -215,25 +318,29 @@ export function DemoCase() {
 
   if (!isLoaded) {
     return (
-      <section className="case-state" aria-live="polite">
-        <p>Checking for a saved simulated demo case…</p>
-      </section>
+      <Workspace>
+        <section className="case-state" aria-live="polite">
+          <p>Checking for a saved simulated demo case…</p>
+        </section>
+      </Workspace>
     );
   }
 
   if (record === null) {
     return (
-      <section className="case-state" aria-labelledby="empty-case-title">
-        <p className="eyebrow">No active case</p>
-        <h2 id="empty-case-title">Create a simulated demo case</h2>
-        <p className="placeholder-copy">
-          No case is created automatically. This browser will store one invented demo record only
-          after you choose to create it.
-        </p>
-        <button className="primary-action" type="button" onClick={createCase}>
-          Create simulated demo case
-        </button>
-      </section>
+      <Workspace>
+        <section className="case-state" aria-labelledby="empty-case-title">
+          <p className="eyebrow">No active case</p>
+          <h2 id="empty-case-title">Create a simulated demo case</h2>
+          <p className="placeholder-copy">
+            No case is created automatically. This browser will store one invented demo record only
+            after you choose to create it.
+          </p>
+          <button className="primary-action" type="button" onClick={createCase}>
+            Create simulated demo case
+          </button>
+        </section>
+      </Workspace>
     );
   }
 
@@ -241,8 +348,126 @@ export function DemoCase() {
   const lockedAt = baseline.lockedAt;
   const isLocked = lockedAt !== null;
 
+  if (record.metadata.currentStep === 2) {
+    const consent = record.contextAndConsent;
+    const noProject = record.projectEvidence.noRelevantProjectAvailable;
+    const analysisAuthorized = consent.analysisAuthorization;
+
+    return (
+      <Workspace currentStep={2}>
+        <section className="case-state" aria-labelledby="candidate-step-title">
+          <p className="eyebrow">Step 2 of 4</p>
+          <h2 id="candidate-step-title">Candidate Consent &amp; Evidence</h2>
+          <p className="case-label">{record.metadata.demoLabel}</p>
+
+          <div className="context-panel">
+            <h3>Context for this authorization</h3>
+            <dl className="baseline-summary">
+              <div><dt>Authorized recipient</dt><dd>{consent.authorizedRecipient}</dd></div>
+              <div><dt>Employer</dt><dd>{consent.employer}</dd></div>
+              <div><dt>Role</dt><dd>{consent.role}</dd></div>
+              <div><dt>Purpose</dt><dd>{consent.purpose}</dd></div>
+              <div><dt>Hiring cycle</dt><dd>{consent.hiringCycle}</dd></div>
+              <div><dt>Simulated project</dt><dd>{record.projectEvidence.projectTitle}</dd></div>
+              <div><dt>Specific decision</dt><dd>{record.projectEvidence.specificDecision}</dd></div>
+            </dl>
+          </div>
+
+          {noProject ? (
+            <div className="consent-panel" id="free-evidence-route">
+              <h3>No relevant project available</h3>
+              <p>Not having a relevant project is not evidence of lacking ability.</p>
+              <p>No LLM analysis, employer-facing negative signal, or substitution experiment is created.</p>
+              <button className="primary-action" type="button" onClick={() => setShowHandoff(true)}>
+                Open free evidence-route handoff
+              </button>
+              {showHandoff && (
+                <p className="handoff-message" role="status">
+                  Free evidence-route handoff requested. This demo stops here and does not create,
+                  recommend, or evaluate replacement evidence.
+                </p>
+              )}
+            </div>
+          ) : consent.contextAuthorization === "declined" ? (
+            <div className="consent-panel">
+              <h3>Do not share</h3>
+              <p>No project, confirmation response, or interpretation is available to the employer.</p>
+            </div>
+          ) : consent.contextAuthorization !== "authorized" ? (
+            <div className="consent-panel">
+              <h3>Choose how to continue</h3>
+              <p>Authorization applies only to the employer, role, purpose, and hiring cycle shown above.</p>
+              <div className="action-row">
+                <button className="primary-action" type="button" onClick={chooseContextAuthorization}>Share for this context</button>
+                <button className="secondary-action" type="button" onClick={chooseDoNotShare}>Do not share</button>
+                <button className="secondary-action" type="button" onClick={chooseNoProject}>No relevant project available</button>
+              </div>
+            </div>
+          ) : !analysisAuthorized ? (
+            <div className="consent-panel">
+              <h3>Text confirmation</h3>
+              <p className="fixed-prompt"><strong>Project-specific prompt:</strong> {record.confirmation.prompt}</p>
+              {isReviewingResponse ? (
+                <div className="response-review">
+                  <h4>Review your response</h4>
+                  <p>{draftResponse}</p>
+                  <div className="action-row">
+                    <button className="secondary-action" type="button" onClick={() => setIsReviewingResponse(false)}>Edit response</button>
+                    <button className="primary-action" type="button" onClick={authorizeTextAnalysis}>Authorize analysis</button>
+                  </div>
+                </div>
+              ) : (
+                <label className="field">
+                  <span>Your simulated response</span>
+                  <textarea
+                    maxLength={600}
+                    onChange={(event) => setDraftResponse(event.target.value)}
+                    rows={6}
+                    value={draftResponse}
+                  />
+                  <span className="character-count">{draftResponse.length}/600 characters</span>
+                  <button
+                    className="primary-action align-start"
+                    disabled={draftResponse.trim().length === 0}
+                    type="button"
+                    onClick={() => setIsReviewingResponse(true)}
+                  >
+                    Review response
+                  </button>
+                </label>
+              )}
+              {validationMessage && <p className="validation-message" role="alert">{validationMessage}</p>}
+            </div>
+          ) : (
+            <div className="consent-panel">
+              <h3>Analysis unavailable</h3>
+              <p>
+                This is a temporary Feature 4 technical placeholder. No Gemini request was made and
+                no AI evidence conclusion was produced.
+              </p>
+              {consent.sharingStatus === "paused_pending_review" && (
+                <p className="handoff-message" role="status">Sharing is paused pending human review.</p>
+              )}
+              <div className="action-row">
+                <button className="primary-action" disabled type="button" title="A valid interpretation is required before sharing">Share</button>
+                <button className="secondary-action" type="button" onClick={pauseForHumanReview}>Request human review</button>
+                <button className="secondary-action" type="button" onClick={chooseDoNotShare}>Do not share</button>
+              </div>
+            </div>
+          )}
+
+          <div className="step-actions">
+            <button className="secondary-action" type="button" onClick={goToBaselineStep}>Back to Baseline Setup</button>
+            <button className="secondary-action" type="button" onClick={deleteCase}>Delete demo case</button>
+          </div>
+        </section>
+      </Workspace>
+    );
+  }
+
   return (
-    <section className="case-state" aria-labelledby="active-case-title">
+    <Workspace currentStep={1}>
+      <section className="case-state" aria-labelledby="active-case-title">
       <p className="eyebrow">Step {record.metadata.currentStep} of 4</p>
       <h2 id="active-case-title">Baseline Setup</h2>
       <p className="case-label">{record.metadata.demoLabel}</p>
@@ -280,6 +505,9 @@ export function DemoCase() {
             {record.calculatedResults.currentCost && <CostSummary label="Current screening cost" cost={record.calculatedResults.currentCost} />}
             {record.calculatedResults.proposedCost && <CostSummary label="Proposed Proof-workflow cost" cost={record.calculatedResults.proposedCost} />}
           </div>
+          <button className="primary-action" type="button" onClick={goToCandidateStep}>
+            Continue to Candidate Consent &amp; Evidence
+          </button>
         </div>
       ) : (
         <form className="baseline-form" onInput={updatePreview} onSubmit={submitCheckpoint}>
@@ -317,6 +545,7 @@ export function DemoCase() {
       <button className="secondary-action" type="button" onClick={deleteCase}>
         Delete demo case
       </button>
-    </section>
+      </section>
+    </Workspace>
   );
 }

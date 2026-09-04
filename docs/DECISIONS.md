@@ -89,3 +89,30 @@ This is an append-only implementation log. Planned Packet tests remain marked
   scope scans passed before review.
 - **Tomorrow's first move:** After Feature 3 review and authorization, define the bounded Feature 4
   consent-state transitions before adding Candidate Text and no-project UI branches.
+
+## 2026-09-04 — Session 4: Feature 4 consent, Text, and no-project branches
+
+- **Decision or implementation detail:** Added pure context-consent, Text authorization, sharing,
+  employer-visibility, and step-navigation transitions. Only steps 1 and 2 are operational. Text
+  drafts remain in component memory; only a reviewed response is persisted when analysis is
+  authorized. `Analysis unavailable` is a deterministic Feature 4 placeholder only.
+- **Reason and Packet boundary protected:** Candidate evidence remains closed to employer access
+  for every implemented path. No-project is distinct from insufficient evidence, refusal clears
+  candidate evidence from the record, premature Share is rejected, and a context change clears the
+  prior confirmation and authorization. The placeholder is not evidence and does not validate real
+  Gemini or API failure handling.
+- **Files or behavior changed:** Added consent transition rules and tests, strengthened confirmation
+  validation and context invalidation, connected the Baseline and Candidate views, and added the
+  Text review, refusal, no-project handoff, placeholder, and paused-review interfaces.
+- **Real tests run and results:** `npm test` passed 52 tests across three files, `npm run lint`
+  passed with no findings, and `npm run build` passed with TypeScript checking and static generation
+  of `/`. No real implementation issue was discovered during Feature 4 before final review.
+- **Mechanical Pass status:** Not started. T08 and every other Packet Mechanical Pass test remain
+  `Not run — planned before code`; the placeholder does not count as running or validating T08.
+- **Commit SHA and push status:** No commit yet; Feature 4 must be reviewed before staging or
+  committing.
+- **Deployment URL/status:** Not deployed; Deploy 1 requires separate post-review authorization.
+- **Unresolved issues:** None within the approved Feature 4 scope. Final integrity, secret,
+  personal-data, safe-rendering, and later-feature scope scans passed before review.
+- **Tomorrow's first move:** After Feature 4 review and session close, obtain explicit authorization
+  before either Deploy 1 or proposing Feature 5.

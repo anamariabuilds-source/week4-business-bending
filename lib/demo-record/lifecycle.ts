@@ -31,6 +31,17 @@ export function updateContext(
       finalSharingDecision: null,
       sharingStatus: "not_authorized",
     },
+    projectEvidence: {
+      ...record.projectEvidence,
+      noRelevantProjectAvailable: false,
+    },
+    confirmation: {
+      prompt: record.confirmation.prompt,
+      modality: null,
+      confirmationResponse: null,
+      transcriptReviewState: null,
+      voiceTechnicalState: null,
+    },
     llmInterpretation: {
       analysisStatus: "not_requested",
       evidenceStatus: null,
