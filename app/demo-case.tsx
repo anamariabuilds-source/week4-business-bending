@@ -2,15 +2,24 @@
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 
+import { analysisOutputSchema } from "@/lib/ai/contracts";
+import {
+  applyAnalysisOutput,
+  createAnalysisRequest,
+  markAnalysisInProgress,
+  markAnalysisUnavailable,
+} from "@/lib/demo-record/analysis-state";
 import { calculateEmployerCost, lockCheckpoint1, type EmployerCost } from "@/lib/demo-record/checkpoint1";
 import {
   authorizeCurrentContext,
   authorizeReviewedTextAnalysis,
+  authorizeReviewedVoiceAnalysis,
   declineSharing,
   openBaselineStep,
   openCandidateStep,
   requestHumanReview,
   selectNoRelevantProject,
+  shareAuthorizedInterpretation,
 } from "@/lib/demo-record/consent";
 import { createSimulatedDemoRecord } from "@/lib/demo-record/fixture";
 import {
@@ -24,6 +33,7 @@ import {
   loadDemoRecord,
   saveDemoRecord,
 } from "@/lib/demo-record/storage";
+import { VoiceConfirmation } from "./voice-confirmation";
 
 type CostPrefix = "current" | "proposed";
 
@@ -265,11 +275,40 @@ export function DemoCase() {
     setValidationMessage(null);
   }
 
-  function authorizeTextAnalysis() {
+  async function runAnalysis(authorizedRecord: HiringCycleRecord) {
+    const analyzingRecord = markAnalysisInProgress(authorizedRecord);
+    persistRecord(analyzingRecord);
+
+    try {
+      const response = await fetch("/api/analyze-evidence", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(createAnalysisRequest(analyzingRecord)),
+      });
+      const body: unknown = await response.json();
+      if (
+        !response.ok ||
+        typeof body !== "object" ||
+        body === null ||
+        !("status" in body) ||
+        body.status !== "available" ||
+        !("interpretation" in body)
+      ) {
+        throw new Error("ANALYSIS_UNAVAILABLE");
+      }
+      const output = analysisOutputSchema.parse(body.interpretation);
+      persistRecord(applyAnalysisOutput(analyzingRecord, output));
+    } catch {
+      persistRecord(markAnalysisUnavailable(analyzingRecord));
+    }
+  }
+
+  async function authorizeTextAnalysis() {
     if (record === null) return;
     try {
-      persistRecord(authorizeReviewedTextAnalysis(record, draftResponse, isReviewingResponse));
+      const authorized = authorizeReviewedTextAnalysis(record, draftResponse, isReviewingResponse);
       setValidationMessage(null);
+      await runAnalysis(authorized);
     } catch {
       setValidationMessage(
         "Use 1–600 characters of simulated content without an email address or phone number.",
@@ -277,8 +316,31 @@ export function DemoCase() {
     }
   }
 
+  async function authorizeVoiceAnalysis(transcript: string) {
+    if (record === null) return;
+    try {
+      const authorized = authorizeReviewedVoiceAnalysis(record, transcript, true);
+      setValidationMessage(null);
+      await runAnalysis(authorized);
+    } catch {
+      setValidationMessage(
+        "Use 1–600 characters of simulated content without an email address or phone number.",
+      );
+    }
+  }
+
+  async function retryAnalysis() {
+    if (record !== null && record.confirmation.confirmationResponse !== null) {
+      await runAnalysis(record);
+    }
+  }
+
   function pauseForHumanReview() {
     if (record !== null) persistRecord(requestHumanReview(record));
+  }
+
+  function shareInterpretation() {
+    if (record !== null) persistRecord(shareAuthorizedInterpretation(record));
   }
 
   function updatePreview(event: FormEvent<HTMLFormElement>) {
@@ -436,23 +498,42 @@ export function DemoCase() {
                   </button>
                 </label>
               )}
+              <VoiceConfirmation onAuthorize={authorizeVoiceAnalysis} prompt={record.confirmation.prompt} />
               {validationMessage && <p className="validation-message" role="alert">{validationMessage}</p>}
             </div>
           ) : (
             <div className="consent-panel">
-              <h3>Analysis unavailable</h3>
-              <p>
-                This is a temporary Feature 4 technical placeholder. No Gemini request was made and
-                no AI evidence conclusion was produced.
-              </p>
+              {record.llmInterpretation.analysisStatus === "analyzing" && (
+                <><h3>Analyzing simulated evidence</h3><p role="status">Gemini analysis is in progress…</p></>
+              )}
+              {record.llmInterpretation.analysisStatus === "analysis_unavailable" && (
+                <><h3>Analysis unavailable</h3><p>A technical, API, timeout, or response-validation problem prevented an AI conclusion. This is not an evidence or ability judgment.</p></>
+              )}
+              {record.llmInterpretation.analysisStatus === "available" && (
+                <div className="interpretation-result">
+                  <h3>{record.llmInterpretation.evidenceStatus}</h3>
+                  <p className="data-disclosure">{record.llmInterpretation.modelDisclosure}</p>
+                  <h4>Observable evidence</h4>
+                  <ul>{record.llmInterpretation.observableEvidence.map((item) => <li key={item}>{item}</li>)}</ul>
+                  <h4>Source references</h4>
+                  <ul>{record.llmInterpretation.sourceReferences.map((item) => <li key={item}>{item}</li>)}</ul>
+                  <h4>Limitations</h4>
+                  <ul>{record.llmInterpretation.limitations.map((item) => <li key={item}>{item}</li>)}</ul>
+                  {record.calculatedResults.additionalHumanReviewRequired && <p className="handoff-message">Additional human review is required.</p>}
+                </div>
+              )}
               {consent.sharingStatus === "paused_pending_review" && (
                 <p className="handoff-message" role="status">Sharing is paused pending human review.</p>
               )}
-              <div className="action-row">
-                <button className="primary-action" disabled type="button" title="A valid interpretation is required before sharing">Share</button>
-                <button className="secondary-action" type="button" onClick={pauseForHumanReview}>Request human review</button>
-                <button className="secondary-action" type="button" onClick={chooseDoNotShare}>Do not share</button>
-              </div>
+              {record.llmInterpretation.analysisStatus !== "analyzing" && (
+                <div className="action-row">
+                  <button className="primary-action" disabled={record.llmInterpretation.analysisStatus !== "available"} type="button" onClick={shareInterpretation}>Share</button>
+                  {record.llmInterpretation.analysisStatus === "analysis_unavailable" && <button className="secondary-action" type="button" onClick={retryAnalysis}>Retry analysis</button>}
+                  <button className="secondary-action" type="button" onClick={pauseForHumanReview}>Request human review</button>
+                  <button className="secondary-action" type="button" onClick={chooseDoNotShare}>Do not share</button>
+                </div>
+              )}
+              {consent.sharingStatus === "authorized" && <p className="handoff-message" role="status">Candidate-authorized sharing is recorded for this context.</p>}
             </div>
           )}
 

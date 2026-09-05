@@ -124,6 +124,7 @@ export function createSimulatedDemoRecord(
       proposedCost: null,
       actualCost: null,
       normalizedBaselineAtFinalVolumeMxn: null,
+      additionalHumanReviewRequired: null,
       crossEmployerValidation: "Not validated",
     },
   });

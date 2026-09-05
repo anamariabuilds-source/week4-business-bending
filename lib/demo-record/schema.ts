@@ -109,7 +109,7 @@ export const hiringCycleRecordSchema = z
       .strict(),
     llmInterpretation: z
       .object({
-        analysisStatus: z.enum(["not_requested", "available", "analysis_unavailable"]),
+        analysisStatus: z.enum(["not_requested", "analyzing", "available", "analysis_unavailable"]),
         evidenceStatus: z
           .enum(["Evidence supports this specific decision", "Insufficient evidence"])
           .nullable(),
@@ -179,6 +179,7 @@ export const hiringCycleRecordSchema = z
         proposedCost: calculatedCostSchema.nullable(),
         actualCost: calculatedCostSchema.nullable(),
         normalizedBaselineAtFinalVolumeMxn: nonNegativeNumber.nullable(),
+        additionalHumanReviewRequired: z.boolean().nullable(),
         crossEmployerValidation: z.literal("Not validated"),
       })
       .strict(),

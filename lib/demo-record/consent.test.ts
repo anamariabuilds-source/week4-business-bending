@@ -30,7 +30,7 @@ function authorizedContextRecord(): HiringCycleRecord {
   return authorizeCurrentContext(lockedRecord());
 }
 
-function placeholderRecord(): HiringCycleRecord {
+function authorizedAnalysisRecord(): HiringCycleRecord {
   return authorizeReviewedTextAnalysis(
     authorizedContextRecord(),
     "A blank did not document a zero-day lead time, so it remained missing.",
@@ -61,7 +61,7 @@ describe("Candidate entry and context consent", () => {
   });
 
   it("declining clears confirmation and blocks employer visibility", () => {
-    const declined = declineSharing(placeholderRecord());
+    const declined = declineSharing(authorizedAnalysisRecord());
 
     expect(declined.contextAndConsent.contextAuthorization).toBe("declined");
     expect(declined.contextAndConsent.analysisAuthorization).toBe(false);
@@ -101,14 +101,14 @@ describe("Text review and temporary analysis placeholder", () => {
   });
 
   it("persists only the reviewed response and creates no evidence conclusion", () => {
-    const result = placeholderRecord();
+    const result = authorizedAnalysisRecord();
 
     expect(result.confirmation.modality).toBe("text");
     expect(result.confirmation.confirmationResponse).toBe(
       "A blank did not document a zero-day lead time, so it remained missing.",
     );
     expect(result.contextAndConsent.analysisAuthorization).toBe(true);
-    expect(result.llmInterpretation.analysisStatus).toBe("analysis_unavailable");
+    expect(result.llmInterpretation.analysisStatus).toBe("not_requested");
     expect(result.llmInterpretation.evidenceStatus).toBeNull();
     expect(canEmployerViewEvidence(result)).toBe(false);
   });
@@ -120,7 +120,7 @@ describe("Text review and temporary analysis placeholder", () => {
       setItem: (key, value) => values.set(key, value),
       removeItem: (key) => values.delete(key),
     };
-    const approved = placeholderRecord();
+    const approved = authorizedAnalysisRecord();
     saveDemoRecord(storage, approved);
 
     const reloaded = loadDemoRecord(storage, new Date("2026-09-05T14:00:00.000Z"));
@@ -128,14 +128,14 @@ describe("Text review and temporary analysis placeholder", () => {
     expect(reloaded?.confirmation.confirmationResponse).toBe(
       "A blank did not document a zero-day lead time, so it remained missing.",
     );
-    expect(reloaded?.llmInterpretation.analysisStatus).toBe("analysis_unavailable");
+    expect(reloaded?.llmInterpretation.analysisStatus).toBe("not_requested");
     expect(reloaded?.llmInterpretation.evidenceStatus).toBeNull();
   });
 });
 
 describe("no-project and final sharing boundaries", () => {
   it("keeps no relevant project distinct from insufficient evidence", () => {
-    const noProject = selectNoRelevantProject(placeholderRecord());
+    const noProject = selectNoRelevantProject(authorizedAnalysisRecord());
 
     expect(noProject.projectEvidence.noRelevantProjectAvailable).toBe(true);
     expect(noProject.contextAndConsent.analysisAuthorization).toBe(false);
@@ -146,21 +146,21 @@ describe("no-project and final sharing boundaries", () => {
   });
 
   it("pauses sharing when human review is requested", () => {
-    const paused = requestHumanReview(placeholderRecord());
+    const paused = requestHumanReview(authorizedAnalysisRecord());
 
     expect(paused.contextAndConsent.finalSharingDecision).toBe("request_human_review");
     expect(paused.contextAndConsent.sharingStatus).toBe("paused_pending_review");
     expect(canEmployerViewEvidence(paused)).toBe(false);
   });
 
-  it("rejects Share while only the Feature 4 placeholder exists", () => {
-    expect(() => shareAuthorizedInterpretation(placeholderRecord())).toThrow(
+  it("rejects Share before a validated analysis exists", () => {
+    expect(() => shareAuthorizedInterpretation(authorizedAnalysisRecord())).toThrow(
       "A valid interpretation is required before sharing.",
     );
   });
 
   it("context changes invalidate authorization and sharing", () => {
-    const paused = requestHumanReview(placeholderRecord());
+    const paused = requestHumanReview(authorizedAnalysisRecord());
     const changed = updateContext(paused, { hiringCycle: "SC-2026-02" });
 
     expect(changed.contextAndConsent.contextAuthorization).toBe("not_recorded");

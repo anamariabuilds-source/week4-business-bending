@@ -69,6 +69,10 @@ export function authorizeCurrentContext(record: HiringCycleRecord): HiringCycleR
       ...clearedConfirmation(),
     },
     llmInterpretation: clearedInterpretation(),
+    calculatedResults: {
+      ...record.calculatedResults,
+      additionalHumanReviewRequired: null,
+    },
   });
 }
 
@@ -92,6 +96,10 @@ export function declineSharing(record: HiringCycleRecord): HiringCycleRecord {
       ...clearedConfirmation(),
     },
     llmInterpretation: clearedInterpretation(),
+    calculatedResults: {
+      ...record.calculatedResults,
+      additionalHumanReviewRequired: null,
+    },
   });
 }
 
@@ -115,6 +123,10 @@ export function selectNoRelevantProject(record: HiringCycleRecord): HiringCycleR
       ...clearedConfirmation(),
     },
     llmInterpretation: clearedInterpretation(),
+    calculatedResults: {
+      ...record.calculatedResults,
+      additionalHumanReviewRequired: null,
+    },
   });
 }
 
@@ -154,7 +166,28 @@ export function authorizeReviewedTextAnalysis(
     },
     llmInterpretation: {
       ...clearedInterpretation(),
-      analysisStatus: "analysis_unavailable",
+      analysisStatus: "not_requested",
+    },
+    calculatedResults: {
+      ...record.calculatedResults,
+      additionalHumanReviewRequired: null,
+    },
+  });
+}
+
+export function authorizeReviewedVoiceAnalysis(
+  record: HiringCycleRecord,
+  response: string,
+  wasReviewed: boolean,
+): HiringCycleRecord {
+  const approved = authorizeReviewedTextAnalysis(record, response, wasReviewed);
+  return hiringCycleRecordSchema.parse({
+    ...approved,
+    confirmation: {
+      ...approved.confirmation,
+      modality: "voice",
+      transcriptReviewState: "reviewed",
+      voiceTechnicalState: "available",
     },
   });
 }
@@ -182,7 +215,9 @@ export function shareAuthorizedInterpretation(record: HiringCycleRecord): Hiring
     record.llmInterpretation.analysisStatus !== "available" ||
     record.llmInterpretation.evidenceStatus === null ||
     record.llmInterpretation.specificDecisionReviewed === null ||
-    record.llmInterpretation.sourceReferences.length === 0
+    record.llmInterpretation.sourceReferences.length === 0 ||
+    record.llmInterpretation.observableEvidence.length === 0 ||
+    record.llmInterpretation.limitations.length === 0
   ) {
     throw new Error("A valid interpretation is required before sharing.");
   }
@@ -205,6 +240,8 @@ export function canEmployerViewEvidence(record: HiringCycleRecord): boolean {
     record.llmInterpretation.analysisStatus === "available" &&
     record.llmInterpretation.evidenceStatus !== null &&
     record.llmInterpretation.specificDecisionReviewed !== null &&
-    record.llmInterpretation.sourceReferences.length > 0
+    record.llmInterpretation.sourceReferences.length > 0 &&
+    record.llmInterpretation.observableEvidence.length > 0 &&
+    record.llmInterpretation.limitations.length > 0
   );
 }

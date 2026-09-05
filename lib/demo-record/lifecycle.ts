@@ -59,5 +59,9 @@ export function updateContext(
       relevance: null,
       note: null,
     },
+    calculatedResults: {
+      ...record.calculatedResults,
+      additionalHumanReviewRequired: null,
+    },
   });
 }

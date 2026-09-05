@@ -60,7 +60,7 @@ Use the exact positive-substitution label:
 - Browser `localStorage`; no database and no authentication
 - Vercel hosting and server-side Next.js routes
 - `@google/genai`
-- Stable model `gemini-2.5-flash`
+- Stable model `gemini-3.5-flash`
 - Browser `MediaRecorder`
 - Automated tests for deterministic logic and validation using the repository's existing test framework; if none exists, add Vitest only
 
@@ -232,7 +232,7 @@ The no-project branch must:
 - Permit playback, re-recording, and transcript review/editing.
 - Keep audio only as a temporary in-memory `Blob`.
 - Send only audio to `POST /api/transcribe-confirmation`; do not send project evidence in this call.
-- Send audio inline to `gemini-2.5-flash`; do not use the Gemini Files API.
+- Send audio inline to `gemini-3.5-flash`; do not use the Gemini Files API.
 - Do not write audio to `localStorage`, a database, repository files, or application logs.
 - Clear the client Blob and object URL after transcription or cancellation.
 - Return `Voice transcription unavailable` for microphone, format, size, API, or transcription failures.
@@ -248,7 +248,7 @@ Voice transcription only converts temporary audio into candidate-reviewable text
 
 ## Evidence-Analysis Route
 
-Create `POST /api/analyze-evidence` using `@google/genai` and `gemini-2.5-flash`.
+Create `POST /api/analyze-evidence` using `@google/genai` and `gemini-3.5-flash`.
 
 The route may receive only:
 

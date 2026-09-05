@@ -117,3 +117,59 @@ This is an append-only implementation log. Planned Packet tests remain marked
   personal-data, safe-rendering, and later-feature scope scans passed before review.
 - **Tomorrow's first move:** After Feature 4 review and session close, obtain explicit authorization
   before either Deploy 1 or proposing Feature 5.
+
+## 2026-09-04 — Session 5: Feature 5 Voice and bounded Gemini analysis
+
+- **Decision or implementation detail:** Added server-only Gemini transcription and evidence-analysis
+  routes using the exactly pinned `@google/genai` 2.21.0 package and `gemini-3.5-flash`. Audio is
+  sent inline as a raw bounded request. Analysis uses fixed simulated evidence, JSON Schema output,
+  and server-side Zod validation. The browser automatically stops recording at 60 seconds; the
+  server independently enforces supported MIME types and a 5 MB body limit without claiming to
+  inspect audio duration.
+- **Reason and Packet boundary protected:** Voice and Text converge on one approved confirmation
+  field and analysis request. Audio remains temporary client state and is cleared after use.
+  Technical, API, timeout, and invalid-output failures map to `Analysis unavailable`; Voice failures
+  map to `Voice transcription unavailable`. Neither route intentionally logs submitted or model
+  content. Gemini never calculates human review, costs, acceptance, substitution, or outcomes.
+- **Files or behavior changed:** Added bounded AI contracts, server request/route adapters, fixed
+  prompt and generation-request builders, Voice state and UI, deterministic analysis-state rules,
+  API routes, tests, styles, schema fields, and the server-only SDK dependency.
+- **Real tests run and results:** Controlled tests cover server request limits, MIME validation,
+  structured-output rejection, timeouts, no-content logging, prompt boundaries, inline audio,
+  client Voice limits and cleanup, Text/Voice equivalence, sharing gates, and deterministic
+  additional-human-review rules. Final `npm test` passed 89 tests across six files, `npm run lint`
+  passed with no findings, and `npm run build` passed with TypeScript checking and both API routes
+  emitted as dynamic server routes. Dependency installation reported zero vulnerabilities.
+- **Implementation issues discovered:** The first new controlled test run found that Vitest did not
+  resolve direct `@/` aliases in two test imports; after those were made relative, a runtime contract
+  import exposed the same issue in `analysis-state.ts`. The imports were corrected and the final
+  suite passed. Live verification then found that the client explicitly selected Gemini API `v1`,
+  while this key exposes `gemini-2.5-flash` through `v1beta`; the server-only client was corrected to
+  use `v1beta` without changing the model or any prompt, schema, validation, consent, cost, or claim
+  boundary. These are Feature 5 implementation issues, not Mechanical Pass bugs.
+- **Provider compatibility correction:** `gemini-2.5-flash` returned provider-side HTTP 404 on
+  `generateContent` for this project despite appearing in `models.list`; stable
+  `gemini-3.5-flash` was substituted after live verification. No product behavior or claim boundary
+  changed.
+- **Live Gemini verification:** With `GEMINI_API_KEY` configured, the key-specific `v1beta` model
+  listing returned `gemini-2.5-flash` with `generateContent` support. The earlier failed Text
+  attempts returned HTTP 422 `ANALYSIS_UNAVAILABLE`; both a content-free SDK request and direct
+  `v1beta` REST `generateContent` request returned HTTP 404. Stable `gemini-3.5-flash` was then
+  selected, the forced API-version override was removed, and the content-free smoke test passed.
+  The final simulated Text request returned HTTP 200 with `status: available`; the bounded payload
+  passed the route's server-side Zod validation and independent shape checks, including a permitted
+  evidence status, source references, and limitations. A synthetic `say`/`afconvert` MP4 Voice
+  fixture produced HTTP 200 with `status: available` and a non-empty transcript within 600
+  characters; the temporary fixture and response were deleted immediately after the request.
+  No transcript, audio, evidence, model content, or API key was printed or intentionally logged;
+  only request method, path, status, and timing appeared in development-server output.
+- **Mechanical Pass status:** Not started. T08 and every other Packet Mechanical Pass test remain
+  `Not run — planned before code`; controlled Feature 5 route tests do not update that status.
+- **Commit SHA and push status:** No commit yet; Feature 5 must be reviewed before staging or
+  committing.
+- **Deployment URL/status:** Not deployed.
+- **Unresolved issues:** None within the approved Feature 5 scope. The provider compatibility issue
+  was corrected without changing product behavior or claim boundaries. Final integrity, secret,
+  client-bundle, logging, personal-data, audio-persistence, and later-feature scope scans passed.
+- **Tomorrow's first move:** Obtain review authorization before staging or closing Feature 5; do not
+  start Feature 6 or the Mechanical Pass from this session.

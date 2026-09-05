@@ -426,6 +426,31 @@ button:disabled {
   background: var(--blue-100);
 }
 
+.voice-panel {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.voice-panel h4 {
+  margin: 0;
+}
+
+.voice-panel audio {
+  width: min(100%, 32rem);
+  margin-top: 0.75rem;
+}
+
+.data-disclosure {
+  padding: 0.75rem;
+  border-left: 4px solid var(--blue-700);
+  background: var(--blue-100);
+}
+
+.interpretation-result li + li {
+  margin-top: 0.4rem;
+}
+
 @media (max-width: 700px) {
   .topbar {
     align-items: flex-start;
