@@ -200,3 +200,29 @@ This is an append-only implementation log. Planned Packet tests remain marked
 - **Deployment URL/status:** Not deployed.
 - **Unresolved issues:** None within the approved Feature 6 scope. Feature 7 and Feature 8 remain
   explicitly unstarted.
+
+## 2026-09-05 — Session 7: Documented outcome and actual workflow cost
+
+- **Decision or implementation detail:** Added Checkpoint 3 fact collection, deterministic
+  `Outcome not documented` / `Kept` / `Shortened` / `Removed` calculation, observed-substitution
+  mapping, actual employer-side cost calculation, final-volume normalization, and the four-card
+  Final Workflow Outcome view. The exact 50% reduction threshold remains the locked simulated rule.
+- **Reason and Packet boundary protected:** Only complete documented removal or material shortening
+  can produce simulated observed substitution. Evidence status, Hiring Manager review/relevance,
+  and stated interest remain independent. Candidate time stays outside employer cost; the main Kept
+  path retains the original screen plus Proof at MXN 1,920 total / MXN 480 per candidate. All result
+  language remains simulated and makes no claim of causality, acceptance, ROI, savings, ability,
+  hiring suitability, adoption, or proven economic value.
+- **Files or behavior changed:** Added reusable Checkpoint 3 schema export and pure outcome/cost rules,
+  deterministic tests, validated fact forms, final result cards, cost comparison, and responsive
+  result styles. Existing Gemini, consent, evidence, Voice, and Text behavior was not changed.
+- **Real tests run and results:** Feature 7 outcome tests passed 10 tests. `npm run lint` and
+  `npm run build` passed; full-suite and final boundary checks remain to be recorded before review.
+- **Implementation issues discovered:** An initial schema extraction patch duplicated the record schema
+  while exposing Checkpoint 3 validation. It was corrected to a single reusable schema declaration;
+  no product behavior changed. This is a Feature 7 implementation issue, not a Mechanical Pass bug.
+- **Mechanical Pass status:** Not started. T08 and every other Packet Mechanical Pass test remain
+  `Not run — planned before code`.
+- **Commit SHA and push status:** No commit yet; Feature 7 is awaiting review before staging.
+- **Deployment URL/status:** Not deployed. Feature 8 has not started.
+- **Unresolved issues:** None within the approved Feature 7 scope. `docs/PACKET.md` remains unchanged.

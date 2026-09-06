@@ -46,6 +46,22 @@ const calculatedCostSchema = z
   })
   .strict();
 
+export const checkpoint3FactsSchema = z
+  .object({
+    originalStepRemains: z.boolean().nullable(),
+    finalDurationMinutes: nonNegativeNumber.nullable(),
+    finalEmployerActiveTimeMinutesPerCandidate: nonNegativeNumber.nullable(),
+    equivalentReplacementExists: z.boolean().nullable(),
+    finalCandidateVolume: z.number().int().positive().max(1000).nullable(),
+    actualWorkflowCostInputs: costInputsSchema.nullable(),
+    effectiveDate: z.iso.date().nullable(),
+    approvingRole: z.string().max(120).nullable(),
+    simulatedDocumentType: z.string().max(120).nullable(),
+    simulatedDocumentReference: z.string().max(120).nullable(),
+    changeDescription: z.string().max(500).nullable(),
+  })
+  .strict();
+
 export const hiringCycleRecordSchema = z
   .object({
     metadata: z
@@ -149,21 +165,7 @@ export const hiringCycleRecordSchema = z
         ]),
       })
       .strict(),
-    checkpoint3Facts: z
-      .object({
-        originalStepRemains: z.boolean().nullable(),
-        finalDurationMinutes: nonNegativeNumber.nullable(),
-        finalEmployerActiveTimeMinutesPerCandidate: nonNegativeNumber.nullable(),
-        equivalentReplacementExists: z.boolean().nullable(),
-        finalCandidateVolume: z.number().int().positive().max(1000).nullable(),
-        actualWorkflowCostInputs: costInputsSchema.nullable(),
-        effectiveDate: z.iso.date().nullable(),
-        approvingRole: z.string().max(120).nullable(),
-        simulatedDocumentType: z.string().max(120).nullable(),
-        simulatedDocumentReference: z.string().max(120).nullable(),
-        changeDescription: z.string().max(500).nullable(),
-      })
-      .strict(),
+    checkpoint3Facts: checkpoint3FactsSchema,
     calculatedResults: z
       .object({
         documentationComplete: z.boolean().nullable(),

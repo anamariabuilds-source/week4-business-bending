@@ -27,7 +27,12 @@ import {
 } from "@/lib/demo-record/consent";
 import { createSimulatedDemoRecord } from "@/lib/demo-record/fixture";
 import {
+  applyCheckpoint3Facts,
+  openFinalOutcomeStep,
+} from "@/lib/demo-record/outcome";
+import {
   checkpoint1BaselineDraftSchema,
+  checkpoint3FactsSchema,
   type Checkpoint1BaselineDraft,
   type CostInputs,
   type HiringCycleRecord,
@@ -39,7 +44,7 @@ import {
 } from "@/lib/demo-record/storage";
 import { VoiceConfirmation } from "./voice-confirmation";
 
-type CostPrefix = "current" | "proposed";
+type CostPrefix = "current" | "proposed" | "actual";
 
 const workflowSteps = [
   "Baseline Setup",
@@ -87,6 +92,17 @@ function costInputsFromForm(formData: FormData, prefix: CostPrefix): CostInputs 
     hiringManagerHourlyRateMxn: numberValue(formData, `${prefix}HmRate`),
     externalFeesPerCandidateMxn: numberValue(formData, `${prefix}ExternalFees`),
     llmSystemCostPerCandidateMxn: numberValue(formData, `${prefix}SystemCost`),
+  };
+}
+
+function actualCostInputsFromForm(formData: FormData): CostInputs {
+  return {
+    talentAcquisitionMinutesPerCandidate: numberValue(formData, "actualTaMinutes"),
+    talentAcquisitionHourlyRateMxn: numberValue(formData, "actualTaRate"),
+    hiringManagerMinutesPerCandidate: numberValue(formData, "actualHmMinutes"),
+    hiringManagerHourlyRateMxn: numberValue(formData, "actualHmRate"),
+    externalFeesPerCandidateMxn: numberValue(formData, "actualExternalFees"),
+    llmSystemCostPerCandidateMxn: numberValue(formData, "actualSystemCost"),
   };
 }
 
@@ -403,6 +419,50 @@ export function DemoCase() {
       setValidationMessage(null);
     } catch {
       setValidationMessage("Complete the Hiring Manager review and relevance before recording interest.");
+    }
+  }
+
+  function continueToFinalOutcome() {
+    if (record === null) return;
+    try {
+      persistRecord(openFinalOutcomeStep(record));
+      setValidationMessage(null);
+    } catch {
+      setValidationMessage("Complete authorized evidence review before final workflow facts.");
+    }
+  }
+
+  function saveCheckpoint3Facts(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (record === null) return;
+    const values = new FormData(event.currentTarget);
+    const originalStepRemains = values.get("originalStepRemains");
+    const equivalentReplacementExists = values.get("equivalentReplacementExists");
+    if (
+      (originalStepRemains !== "true" && originalStepRemains !== "false") ||
+      (equivalentReplacementExists !== "true" && equivalentReplacementExists !== "false")
+    ) {
+      setValidationMessage("Choose permitted workflow fact values.");
+      return;
+    }
+    try {
+      const facts = checkpoint3FactsSchema.parse({
+        originalStepRemains: originalStepRemains === "true",
+        finalDurationMinutes: numberValue(values, "finalDurationMinutes"),
+        finalEmployerActiveTimeMinutesPerCandidate: numberValue(values, "finalEmployerActiveTimeMinutesPerCandidate"),
+        equivalentReplacementExists: equivalentReplacementExists === "true",
+        finalCandidateVolume: numberValue(values, "finalCandidateVolume"),
+        actualWorkflowCostInputs: actualCostInputsFromForm(values),
+        effectiveDate: values.get("effectiveDate"),
+        approvingRole: values.get("approvingRole"),
+        simulatedDocumentType: values.get("simulatedDocumentType"),
+        simulatedDocumentReference: values.get("simulatedDocumentReference"),
+        changeDescription: values.get("changeDescription"),
+      });
+      persistRecord(applyCheckpoint3Facts(record, facts));
+      setValidationMessage(null);
+    } catch {
+      setValidationMessage("Complete every required workflow fact and simulated documentation field.");
     }
   }
 
@@ -724,6 +784,102 @@ export function DemoCase() {
           {validationMessage && <p className="validation-message" role="alert">{validationMessage}</p>}
           <div className="step-actions">
             <button className="secondary-action" type="button" onClick={() => persistRecord(openCandidateStep(record))}>Back to Candidate Consent &amp; Evidence</button>
+            {review.review !== null && review.relevance !== null && (
+              <button className="primary-action" type="button" onClick={continueToFinalOutcome}>
+                Continue to Final Workflow Outcome
+              </button>
+            )}
+            <button className="secondary-action" type="button" onClick={deleteCase}>Delete demo case</button>
+          </div>
+        </section>
+      </Workspace>
+    );
+  }
+
+  if (record.metadata.currentStep === 4) {
+    const facts = record.checkpoint3Facts;
+    const currentInputs = baseline.currentScreeningCostInputs;
+    const proposedInputs = baseline.proposedProofWorkflowCostInputs;
+    const defaultActualInputs = facts.actualWorkflowCostInputs ?? {
+      talentAcquisitionMinutesPerCandidate:
+        currentInputs.talentAcquisitionMinutesPerCandidate + proposedInputs.talentAcquisitionMinutesPerCandidate,
+      talentAcquisitionHourlyRateMxn: currentInputs.talentAcquisitionHourlyRateMxn,
+      hiringManagerMinutesPerCandidate:
+        currentInputs.hiringManagerMinutesPerCandidate + proposedInputs.hiringManagerMinutesPerCandidate,
+      hiringManagerHourlyRateMxn: currentInputs.hiringManagerHourlyRateMxn,
+      externalFeesPerCandidateMxn:
+        currentInputs.externalFeesPerCandidateMxn + proposedInputs.externalFeesPerCandidateMxn,
+      llmSystemCostPerCandidateMxn:
+        currentInputs.llmSystemCostPerCandidateMxn + proposedInputs.llmSystemCostPerCandidateMxn,
+    };
+    const result = record.calculatedResults;
+
+    return (
+      <Workspace currentStep={4}>
+        <section className="case-state" aria-labelledby="outcome-title">
+          <p className="eyebrow">Step 4 of 4</p>
+          <h2 id="outcome-title">Final Workflow Outcome</h2>
+          <p className="case-label">{record.metadata.demoLabel}</p>
+          <p className="placeholder-copy">
+            Enter documented simulated workflow facts. The result is calculated from these facts and cannot be selected directly.
+          </p>
+
+          <form className="consent-panel" onSubmit={saveCheckpoint3Facts}>
+            <h3>Checkpoint 3 — documented workflow facts</h3>
+            <div className="field-grid">
+              <label className="field">
+                <span>Original screening step remains required</span>
+                <select defaultValue={facts.originalStepRemains === null ? "" : String(facts.originalStepRemains)} name="originalStepRemains" required>
+                  <option value="" disabled>Select documented fact</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>Equivalent replacement screen exists</span>
+                <select defaultValue={facts.equivalentReplacementExists === null ? "" : String(facts.equivalentReplacementExists)} name="equivalentReplacementExists" required>
+                  <option value="" disabled>Select documented fact</option>
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </label>
+              <NumberField defaultValue={facts.finalDurationMinutes ?? baseline.originalDurationMinutes} label="Final duration (minutes)" min={0} name="finalDurationMinutes" />
+              <NumberField defaultValue={facts.finalEmployerActiveTimeMinutesPerCandidate ?? baseline.employerActiveTimeMinutesPerCandidate} label="Final employer active time per candidate (minutes)" min={0} name="finalEmployerActiveTimeMinutesPerCandidate" />
+              <NumberField defaultValue={facts.finalCandidateVolume ?? baseline.candidateVolume} label="Final candidate volume" min={1} name="finalCandidateVolume" step={1} />
+              <label className="field">
+                <span>Effective date</span>
+                <input defaultValue={facts.effectiveDate ?? ""} name="effectiveDate" required type="date" />
+              </label>
+            </div>
+            <CostFields heading="Actual final workflow cost inputs" inputs={defaultActualInputs} prefix="actual" />
+            <div className="field-grid">
+              <label className="field"><span>Approving role</span><input defaultValue={facts.approvingRole ?? ""} maxLength={120} name="approvingRole" required /></label>
+              <label className="field"><span>Simulated document type</span><input defaultValue={facts.simulatedDocumentType ?? ""} maxLength={120} name="simulatedDocumentType" required /></label>
+              <label className="field"><span>Simulated document reference</span><input defaultValue={facts.simulatedDocumentReference ?? ""} maxLength={120} name="simulatedDocumentReference" required /></label>
+            </div>
+            <label className="field field-wide"><span>Bounded change description</span><textarea defaultValue={facts.changeDescription ?? ""} maxLength={500} name="changeDescription" required rows={4} /></label>
+            <button className="primary-action" type="submit">Calculate documented outcome</button>
+          </form>
+
+          <div className="result-grid" aria-label="Separate final workflow results">
+            <div className="result-card"><h3>Evidence status</h3><p>{record.llmInterpretation.evidenceStatus ?? "Not available"}</p></div>
+            <div className="result-card"><h3>Stated employer interest</h3><p>{record.checkpoint2Response.statedInterest}</p></div>
+            <div className="result-card"><h3>Observed workflow outcome</h3><p>{result.outcome ?? "Complete documented facts"}</p><p className="result-detail">Observed substitution: {result.observedSubstitution ?? "Pending documented facts"}</p></div>
+            <div className="result-card"><h3>Cross-employer validation</h3><p>{result.crossEmployerValidation}</p></div>
+          </div>
+
+          <div className="consent-panel">
+            <h3>Employer-side cost comparison</h3>
+            {result.currentCost && result.proposedCost && <div className="cost-comparison"><CostSummary label="Current screening cost" cost={result.currentCost} /><CostSummary label="Proposed Proof-workflow cost" cost={result.proposedCost} /></div>}
+            {result.actualCost && <div className="cost-comparison"><CostSummary label="Actual final workflow cost" cost={result.actualCost} /></div>}
+            {result.normalizedBaselineAtFinalVolumeMxn !== null && <p className="candidate-time-note">Normalized locked baseline at final volume: {formatMxn(result.normalizedBaselineAtFinalVolumeMxn)} total.</p>}
+            <p className="candidate-time-note">Candidate time is tracked separately and is not included in employer cost.</p>
+            <p className="data-disclosure">These are simulated workflow calculations. They do not establish ROI, savings, causality, acceptance, adoption, or economic value.</p>
+          </div>
+
+          {validationMessage && <p className="validation-message" role="alert">{validationMessage}</p>}
+          <div className="step-actions">
+            <button className="secondary-action" type="button" onClick={() => persistRecord(openEmployerReviewStep(record))}>Back to Evidence Review &amp; Interest</button>
             <button className="secondary-action" type="button" onClick={deleteCase}>Delete demo case</button>
           </div>
         </section>

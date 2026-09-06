@@ -457,6 +457,37 @@ button:disabled {
   margin-top: 0.4rem;
 }
 
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.result-card {
+  min-height: 8rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+
+.result-card h3,
+.result-card p {
+  margin: 0;
+}
+
+.result-card p {
+  margin-top: 0.65rem;
+  font-weight: 700;
+}
+
+.result-card .result-detail {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
 @media (max-width: 700px) {
   .topbar {
     align-items: flex-start;
@@ -498,6 +529,7 @@ button:disabled {
 
   .field-grid,
   .cost-comparison,
+  .result-grid,
   .baseline-summary {
     grid-template-columns: 1fr;
   }
