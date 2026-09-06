@@ -98,11 +98,28 @@ describe("transcription route validation", () => {
     expect((await response.json()).status).toBe("voice_transcription_unavailable");
   });
 
+  it("maps a body read failure to a bounded diagnostic code", async () => {
+    const request = {
+      headers: new Headers({ "content-type": "audio/webm" }),
+      body: {
+        getReader(): never {
+          throw new Error("private body failure");
+        },
+      },
+    } as unknown as Request;
+
+    const response = await createTranscriptionHandler(vi.fn())(request);
+    expect(await response.json()).toEqual({
+      status: "voice_transcription_unavailable",
+      error_code: "BODY_READ_FAILED",
+    });
+  });
+
   it.each([
-    ["API rejection", async () => Promise.reject(new Error("technical"))],
-    ["empty transcript", async () => ""],
-    ["oversized transcript", async () => "x".repeat(601)],
-  ])("maps %s to Voice transcription unavailable", async (_label, generate) => {
+    ["API rejection", async (): Promise<string> => Promise.reject(new Error("private provider failure")), "PROVIDER_REQUEST_FAILED"],
+    ["empty transcript", async (): Promise<string> => "", "TRANSCRIPT_VALIDATION_FAILED"],
+    ["oversized transcript", async (): Promise<string> => "x".repeat(601), "TRANSCRIPT_VALIDATION_FAILED"],
+  ] as const)("maps %s to Voice transcription unavailable", async (_label, generate, errorCode) => {
     const response = await createTranscriptionHandler(generate)(
       new Request("http://localhost/api/transcribe-confirmation", {
         method: "POST",
@@ -111,7 +128,7 @@ describe("transcription route validation", () => {
       }),
     );
     const body = await response.json();
-    expect(body.status).toBe("voice_transcription_unavailable");
+    expect(body).toEqual({ status: "voice_transcription_unavailable", error_code: errorCode });
     expect(JSON.stringify(body)).not.toContain("Insufficient evidence");
   });
 });

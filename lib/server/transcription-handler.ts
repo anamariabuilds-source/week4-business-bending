@@ -21,13 +21,27 @@ export function createTranscriptionHandler(generateTranscript: GenerateTranscrip
       return unavailable("UNSUPPORTED_AUDIO_TYPE", 415);
     }
 
+    let audio: Uint8Array;
     try {
-      const audio = await readBodyWithLimit(request, MAX_AUDIO_BYTES);
-      if (audio.byteLength === 0) return unavailable("EMPTY_AUDIO");
-      const transcript = transcriptionSchema.parse(await generateTranscript(audio, mimeType));
+      audio = await readBodyWithLimit(request, MAX_AUDIO_BYTES);
+    } catch {
+      return unavailable("BODY_READ_FAILED");
+    }
+
+    if (audio.byteLength === 0) return unavailable("EMPTY_AUDIO");
+
+    let transcriptText: string;
+    try {
+      transcriptText = await generateTranscript(audio, mimeType);
+    } catch {
+      return unavailable("PROVIDER_REQUEST_FAILED");
+    }
+
+    try {
+      const transcript = transcriptionSchema.parse(transcriptText);
       return Response.json({ status: "available", transcript });
     } catch {
-      return unavailable("TRANSCRIPTION_UNAVAILABLE");
+      return unavailable("TRANSCRIPT_VALIDATION_FAILED");
     }
   };
 }
