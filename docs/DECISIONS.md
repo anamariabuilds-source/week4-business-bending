@@ -257,3 +257,32 @@ This is an append-only implementation log. Planned Packet tests remain marked
   `docs/IMPLEMENTATION_PROMPT.md` remain unchanged.
 - **Tomorrow's first move:** Obtain review authorization before staging or closing Feature 8; do not
   deploy or begin the Mechanical Pass.
+
+## 2026-09-05 — Mechanical Pass: Final production verification
+
+- **Decision or implementation detail:** Completed the Packet Mechanical Pass against
+  `https://week4-business-bending.vercel.app`. T01–T27 were recorded as PASS, for 27/27 total
+  passes and zero failures. No product decisions, claim boundaries, or application behavior changed.
+- **Testing boundary:** Tests requiring visible workflow behavior were exercised through production
+  browser sessions. Deterministic outcome, lifecycle, schema, cost, consent, and error-boundary cases
+  used the existing application transition/function boundary where the product intentionally exposes
+  no corresponding UI control. These mixed-boundary results are identified in the test record rather
+  than represented as additional UI coverage.
+- **T03 observation:** A real oversized production request was rejected by Vercel with HTTP 413 before
+  the application route. The production client correctly mapped that hosting-layer response to
+  `Voice transcription unavailable`; Text remained available, no analysis ran, and no insufficient-
+  evidence state appeared. This was recorded as a deployment observation, not a product failure.
+- **Mechanical Pass result:** No genuine product, evidence/claim, or economic-hypothesis failure was
+  discovered. The main `Interested → Kept` path correctly showed `Observed substitution: No` and
+  `Cross-employer validation: Not validated`; its economic hypothesis was not treated as validated.
+- **Files or behavior changed:** No application code changed during the Mechanical Pass. No deployment,
+  commit, push, or test-definition change occurred during execution.
+- **Production deployment:** Production URL remained
+  `https://week4-business-bending.vercel.app`; deployed commit was
+  `10c9bed0a17cc6ef0e276363bb4289b10b5b6c28`.
+- **Final Git state:** Local HEAD and `origin/main` remained aligned and the working tree was clean.
+- **Packet status:** Mechanical Pass results are now recorded as actual results; no test definition or
+  expected result was changed. T08 was run and passed during this Mechanical Pass.
+- **Unresolved issues:** None. The project is ready for final review as a completed prototype.
+- **Tomorrow's first move:** Review the final documentation diff, then stage and close the documentation
+  update without changing application behavior.
