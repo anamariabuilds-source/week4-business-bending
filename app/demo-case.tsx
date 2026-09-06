@@ -30,6 +30,7 @@ import {
   applyCheckpoint3Facts,
   openFinalOutcomeStep,
 } from "@/lib/demo-record/outcome";
+import { candidateConsentGuidance } from "@/lib/demo-record/consent-guidance";
 import {
   checkpoint1BaselineDraftSchema,
   checkpoint3FactsSchema,
@@ -556,6 +557,12 @@ export function DemoCase() {
               <div><dt>Simulated project</dt><dd>{record.projectEvidence.projectTitle}</dd></div>
               <div><dt>Specific decision</dt><dd>{record.projectEvidence.specificDecision}</dd></div>
             </dl>
+          </div>
+
+          <div className="consent-panel" role="note" aria-label="Candidate consent guidance">
+            <h3>{candidateConsentGuidance.heading}</h3>
+            <p>{candidateConsentGuidance.simulation}</p>
+            <p>{candidateConsentGuidance.realWorkflow}</p>
           </div>
 
           {noProject ? (
