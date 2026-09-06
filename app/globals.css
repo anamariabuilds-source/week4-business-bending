@@ -205,7 +205,8 @@ body {
 .primary-action:focus-visible,
 .secondary-action:focus-visible,
 input:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+select:focus-visible {
   outline: 3px solid #f3b61f;
   outline-offset: 3px;
 }

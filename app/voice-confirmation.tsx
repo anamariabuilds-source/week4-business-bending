@@ -207,7 +207,9 @@ export function VoiceConfirmation({ onAuthorize, prompt }: VoiceConfirmationProp
       )}
       {status === "recorded" && objectUrl && (
         <div>
-          <audio controls src={objectUrl}>Audio playback is unavailable in this browser.</audio>
+          <audio aria-label="Recorded simulated confirmation" controls src={objectUrl}>
+            Audio playback is unavailable in this browser.
+          </audio>
           <div className="action-row">
             <button className="primary-action" type="button" onClick={transcribe}>Transcribe Voice</button>
             <button className="secondary-action" type="button" onClick={startRecording}>Re-record</button>

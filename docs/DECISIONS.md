@@ -226,3 +226,34 @@ This is an append-only implementation log. Planned Packet tests remain marked
 - **Commit SHA and push status:** No commit yet; Feature 7 is awaiting review before staging.
 - **Deployment URL/status:** Not deployed. Feature 8 has not started.
 - **Unresolved issues:** None within the approved Feature 7 scope. `docs/PACKET.md` remains unchanged.
+
+## 2026-09-05 — Session 8: Automated checks, accessibility, and security review
+
+- **Decision or implementation detail:** Completed the Feature 8 verification and hardening pass
+  without adding product behavior. Added focused schema-boundary tests, including bounded simulated
+  text, contact-data rejection, finite/non-negative cost inputs, baseline constraints, Checkpoint 3
+  pending values, and strict persisted-record fields. Added visible focus styling for native select
+  controls and an accessible label for temporary recorded-audio playback.
+- **Reason and Packet boundary protected:** Reused the existing lifecycle, consent invalidation,
+  cost, deterministic outcome, route error-mapping, logging, safe-rendering, and audio-cleanup tests
+  rather than duplicating them. The review confirmed that simulated records expire or delete cleanly,
+  audio is not persisted, Gemini remains server-only, and evidence, review, interest, and outcomes
+  remain separate bounded claims. No product rule, Gemini behavior, route, cost, or Packet decision
+  changed.
+- **Files or behavior changed:** `app/globals.css`, `app/voice-confirmation.tsx`,
+  `lib/demo-record/schema.test.ts`, and this Decisions entry.
+- **Real tests run and results:** Targeted affected suites passed 85 tests across six files. The full
+  suite passed 109 tests across nine files; `npm run lint`, `npm run build`, and `git diff --check`
+  passed. Secret, client-bundle, personal-data, audio-persistence, safe-rendering, logging,
+  later-feature scope, Packet-integrity, and Implementation Prompt integrity scans passed.
+- **Implementation issues discovered:** The accessibility review found that the existing visible-focus
+  selector omitted native `select` controls; it now includes them. Recorded Voice playback lacked an
+  explicit accessible name; it now has one. Neither issue changed product behavior or claim boundaries.
+- **Mechanical Pass status:** Not started. T08 and every other Packet Mechanical Pass test remain
+  `Not run — planned before code`; Feature 8 verification does not change that status.
+- **Commit SHA and push status:** No commit yet; Feature 8 is awaiting review before staging.
+- **Deployment URL/status:** No deployment occurred.
+- **Unresolved issues:** None within the approved Feature 8 scope. `docs/PACKET.md` and
+  `docs/IMPLEMENTATION_PROMPT.md` remain unchanged.
+- **Tomorrow's first move:** Obtain review authorization before staging or closing Feature 8; do not
+  deploy or begin the Mechanical Pass.
