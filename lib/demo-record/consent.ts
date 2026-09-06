@@ -49,6 +49,57 @@ export function openBaselineStep(record: HiringCycleRecord): HiringCycleRecord {
   });
 }
 
+export function openEmployerReviewStep(record: HiringCycleRecord): HiringCycleRecord {
+  requireLockedBaseline(record);
+  if (!canEmployerViewEvidence(record)) {
+    throw new Error("Candidate authorization is required before employer review.");
+  }
+  return hiringCycleRecordSchema.parse({
+    ...record,
+    metadata: { ...record.metadata, currentStep: 3 },
+  });
+}
+
+export function recordHiringManagerReview(
+  record: HiringCycleRecord,
+  review: NonNullable<HiringCycleRecord["hiringManagerReview"]["review"]>,
+  relevance: NonNullable<HiringCycleRecord["hiringManagerReview"]["relevance"]>,
+  note: string | null,
+): HiringCycleRecord {
+  requireLockedBaseline(record);
+  if (!canEmployerViewEvidence(record)) {
+    throw new Error("Candidate authorization is required before employer review.");
+  }
+  const boundedNote = note === null ? null : note.trim();
+  if (boundedNote !== null && boundedNote.length > 500) {
+    throw new Error("Hiring Manager note must be 500 characters or fewer.");
+  }
+  return hiringCycleRecordSchema.parse({
+    ...record,
+    hiringManagerReview: { review, relevance, note: boundedNote },
+  });
+}
+
+export function recordStatedInterest(
+  record: HiringCycleRecord,
+  statedInterest: HiringCycleRecord["checkpoint2Response"]["statedInterest"],
+): HiringCycleRecord {
+  requireLockedBaseline(record);
+  if (!canEmployerViewEvidence(record)) {
+    throw new Error("Candidate authorization is required before stated interest.");
+  }
+  if (
+    record.hiringManagerReview.review === null ||
+    record.hiringManagerReview.relevance === null
+  ) {
+    throw new Error("Hiring Manager review and relevance are required before stated interest.");
+  }
+  return hiringCycleRecordSchema.parse({
+    ...record,
+    checkpoint2Response: { statedInterest },
+  });
+}
+
 export function authorizeCurrentContext(record: HiringCycleRecord): HiringCycleRecord {
   requireLockedBaseline(record);
   return hiringCycleRecordSchema.parse({

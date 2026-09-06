@@ -173,3 +173,30 @@ This is an append-only implementation log. Planned Packet tests remain marked
   client-bundle, logging, personal-data, audio-persistence, and later-feature scope scans passed.
 - **Tomorrow's first move:** Obtain review authorization before staging or closing Feature 5; do not
   start Feature 6 or the Mechanical Pass from this session.
+
+## 2026-09-05 — Session 6: Hiring Manager review and stated interest
+
+- **Decision or implementation detail:** Made Step 3 functional for the authorized employer evidence
+  view, separate Hiring Manager review and decision-specific relevance fields, bounded plain-text note,
+  and the Talent Acquisition stated-interest control. Stated interest is available only after both
+  Hiring Manager fields are recorded and remains a separate intention signal.
+- **Reason and Packet boundary protected:** Employer content is shown only when candidate-authorized
+  sharing and a valid bounded interpretation are present. Declined, disputed, unavailable, no-project,
+  and unauthorized states reveal no project, confirmation, or interpretation. Review, relevance, and
+  interest do not change evidence status, acceptance, substitution, costs, outcomes, or human-review
+  calculation. Step 4, workflow facts, actual costs, and substitution remain untouched for Feature 7.
+- **Files or behavior changed:** Added deterministic employer-review and stated-interest transitions,
+  Step 3 UI, bounded note handling, responsive select/plain-text styles, and focused transition tests.
+- **Real tests run and results:** Targeted Feature 6 tests passed 22 tests across two files. Full
+  `npm test` passed 94 tests across seven files; `npm run lint` passed; and `npm run build` passed
+  with TypeScript checking and the existing dynamic Gemini routes.
+- **Implementation issues discovered:** The first focused test used an unlocked record for an employer
+  review rejection assertion and received the earlier baseline-lock error. The fixture was corrected
+  to use a locked but unauthorized record; no product behavior changed. This is a Feature 6
+  implementation issue, not a Mechanical Pass bug.
+- **Mechanical Pass status:** Not started. T08 and every other Packet Mechanical Pass test remain
+  `Not run — planned before code`.
+- **Commit SHA and push status:** No commit yet; Feature 6 is awaiting review before staging.
+- **Deployment URL/status:** Not deployed.
+- **Unresolved issues:** None within the approved Feature 6 scope. Feature 7 and Feature 8 remain
+  explicitly unstarted.

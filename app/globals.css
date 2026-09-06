@@ -239,7 +239,8 @@ textarea:focus-visible {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   min-height: 2.75rem;
   padding: 0.65rem 0.75rem;
@@ -400,6 +401,11 @@ textarea:focus-visible {
 }
 
 .response-review p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.plain-text {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

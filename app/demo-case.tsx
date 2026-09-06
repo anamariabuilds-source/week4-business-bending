@@ -15,8 +15,12 @@ import {
   authorizeReviewedTextAnalysis,
   authorizeReviewedVoiceAnalysis,
   declineSharing,
+  openEmployerReviewStep,
   openBaselineStep,
   openCandidateStep,
+  canEmployerViewEvidence,
+  recordHiringManagerReview,
+  recordStatedInterest,
   requestHumanReview,
   selectNoRelevantProject,
   shareAuthorizedInterpretation,
@@ -343,6 +347,65 @@ export function DemoCase() {
     if (record !== null) persistRecord(shareAuthorizedInterpretation(record));
   }
 
+  function continueToEmployerReview() {
+    if (record === null) return;
+    try {
+      persistRecord(openEmployerReviewStep(record));
+      setValidationMessage(null);
+    } catch {
+      setValidationMessage("Candidate authorization is required before employer review.");
+    }
+  }
+
+  function saveHiringManagerReview(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (record === null) return;
+    const values = new FormData(event.currentTarget);
+    const review = values.get("hiringManagerReview");
+    const relevance = values.get("hiringManagerRelevance");
+    const noteValue = values.get("hiringManagerNote");
+    if (
+      (review !== "Agree" && review !== "Disagree" && review !== "Needs further review") ||
+      (relevance !== "Relevant" && relevance !== "Not relevant" && relevance !== "Needs further review")
+    ) {
+      setValidationMessage("Choose a permitted Hiring Manager review and relevance value.");
+      return;
+    }
+    try {
+      const nextRecord = recordHiringManagerReview(
+        record,
+        review,
+        relevance,
+        typeof noteValue === "string" && noteValue.trim().length > 0 ? noteValue : null,
+      );
+      persistRecord(nextRecord);
+      setValidationMessage(null);
+    } catch {
+      setValidationMessage("Use a Hiring Manager note of 500 characters or fewer.");
+    }
+  }
+
+  function saveStatedInterest(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (record === null) return;
+    const statedInterest = new FormData(event.currentTarget).get("statedInterest");
+    if (
+      statedInterest !== "Interested in testing the proof workflow" &&
+      statedInterest !== "Needs more information" &&
+      statedInterest !== "Not interested" &&
+      statedInterest !== "Not recorded"
+    ) {
+      setValidationMessage("Choose a permitted stated-interest value.");
+      return;
+    }
+    try {
+      persistRecord(recordStatedInterest(record, statedInterest));
+      setValidationMessage(null);
+    } catch {
+      setValidationMessage("Complete the Hiring Manager review and relevance before recording interest.");
+    }
+  }
+
   function updatePreview(event: FormEvent<HTMLFormElement>) {
     const result = checkpoint1BaselineDraftSchema.safeParse(
       (() => {
@@ -534,11 +597,133 @@ export function DemoCase() {
                 </div>
               )}
               {consent.sharingStatus === "authorized" && <p className="handoff-message" role="status">Candidate-authorized sharing is recorded for this context.</p>}
+              {consent.sharingStatus === "authorized" && record.llmInterpretation.analysisStatus === "available" && (
+                <button className="primary-action" type="button" onClick={continueToEmployerReview}>
+                  Continue to Evidence Review &amp; Interest
+                </button>
+              )}
             </div>
           )}
 
           <div className="step-actions">
             <button className="secondary-action" type="button" onClick={goToBaselineStep}>Back to Baseline Setup</button>
+            <button className="secondary-action" type="button" onClick={deleteCase}>Delete demo case</button>
+          </div>
+        </section>
+      </Workspace>
+    );
+  }
+
+  if (record.metadata.currentStep === 3) {
+    const canReview = canEmployerViewEvidence(record);
+    const review = record.hiringManagerReview;
+    const interest = record.checkpoint2Response.statedInterest;
+
+    return (
+      <Workspace currentStep={3}>
+        <section className="case-state" aria-labelledby="employer-review-title">
+          <p className="eyebrow">Step 3 of 4</p>
+          <h2 id="employer-review-title">Evidence Review &amp; Interest</h2>
+          <p className="case-label">{record.metadata.demoLabel}</p>
+
+          <div className="context-panel">
+            <h3>Authorized context</h3>
+            <dl className="baseline-summary">
+              <div><dt>Employer</dt><dd>{record.contextAndConsent.employer}</dd></div>
+              <div><dt>Role</dt><dd>{record.contextAndConsent.role}</dd></div>
+              <div><dt>Purpose</dt><dd>{record.contextAndConsent.purpose}</dd></div>
+              <div><dt>Hiring cycle</dt><dd>{record.contextAndConsent.hiringCycle}</dd></div>
+              <div><dt>Specific decision</dt><dd>{record.projectEvidence.specificDecision}</dd></div>
+            </dl>
+          </div>
+
+          {!canReview ? (
+            <div className="consent-panel">
+              <h3>Employer evidence unavailable</h3>
+              <p>The Candidate has not authorized sharing of a valid interpretation for this context.</p>
+              <p>No project, confirmation response, or interpretation is available here.</p>
+            </div>
+          ) : (
+            <>
+              <div className="consent-panel interpretation-result">
+                <h3>{record.llmInterpretation.evidenceStatus}</h3>
+                <p className="data-disclosure">{record.llmInterpretation.modelDisclosure}</p>
+                <h4>Authorized project evidence</h4>
+                <p>{record.projectEvidence.projectTitle}</p>
+                <ul>
+                  {record.projectEvidence.sourceExcerpts.map((source) => (
+                    <li key={source.sourceId}>
+                      <strong>{source.sourceId}:</strong> {source.excerpt}
+                    </li>
+                  ))}
+                </ul>
+                <h4>Candidate confirmation</h4>
+                <p className="plain-text">{record.confirmation.confirmationResponse}</p>
+                <h4>Observable evidence</h4>
+                <ul>{record.llmInterpretation.observableEvidence.map((item) => <li key={item}>{item}</li>)}</ul>
+                <h4>Source references</h4>
+                <ul>{record.llmInterpretation.sourceReferences.map((item) => <li key={item}>{item}</li>)}</ul>
+                <h4>Limitations</h4>
+                <ul>{record.llmInterpretation.limitations.map((item) => <li key={item}>{item}</li>)}</ul>
+              </div>
+
+              <form className="consent-panel" onSubmit={saveHiringManagerReview}>
+                <h3>Hiring Manager review</h3>
+                <p>Review only the authorized project evidence for the specific screening decision shown above.</p>
+                <div className="field-grid">
+                  <label className="field">
+                    <span>Evidence review</span>
+                    <select defaultValue={review.review ?? ""} name="hiringManagerReview" required>
+                      <option value="" disabled>Select review</option>
+                      <option>Agree</option>
+                      <option>Disagree</option>
+                      <option>Needs further review</option>
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Relevance to this decision</span>
+                    <select defaultValue={review.relevance ?? ""} name="hiringManagerRelevance" required>
+                      <option value="" disabled>Select relevance</option>
+                      <option>Relevant</option>
+                      <option>Not relevant</option>
+                      <option>Needs further review</option>
+                    </select>
+                  </label>
+                </div>
+                <label className="field field-wide">
+                  <span>Optional bounded note</span>
+                  <textarea defaultValue={review.note ?? ""} maxLength={500} name="hiringManagerNote" rows={4} />
+                  <span className="character-count">Maximum 500 characters</span>
+                </label>
+                <button className="primary-action" type="submit">Save Hiring Manager review</button>
+                {review.review !== null && review.relevance !== null && (
+                  <p className="handoff-message" role="status">Hiring Manager review and relevance are recorded separately.</p>
+                )}
+              </form>
+
+              <form className="consent-panel" onSubmit={saveStatedInterest}>
+                <h3>Stated employer interest</h3>
+                <p>Interest is intention only. It does not establish adoption, acceptance, substitution, or economic validation.</p>
+                <label className="field">
+                  <span>Talent Acquisition Manager response</span>
+                  <select defaultValue={interest} name="statedInterest" disabled={review.review === null || review.relevance === null}>
+                    <option>Not recorded</option>
+                    <option>Interested in testing the proof workflow</option>
+                    <option>Needs more information</option>
+                    <option>Not interested</option>
+                  </select>
+                </label>
+                <button className="primary-action" disabled={review.review === null || review.relevance === null} type="submit">
+                  Save stated interest
+                </button>
+                {interest !== "Not recorded" && <p className="handoff-message" role="status">Stated interest is recorded separately from evidence and review.</p>}
+              </form>
+            </>
+          )}
+
+          {validationMessage && <p className="validation-message" role="alert">{validationMessage}</p>}
+          <div className="step-actions">
+            <button className="secondary-action" type="button" onClick={() => persistRecord(openCandidateStep(record))}>Back to Candidate Consent &amp; Evidence</button>
             <button className="secondary-action" type="button" onClick={deleteCase}>Delete demo case</button>
           </div>
         </section>
